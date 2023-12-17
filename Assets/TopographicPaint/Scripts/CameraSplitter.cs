@@ -3,31 +3,27 @@ using System.Collections;
 
 public class CameraSplitter : MonoBehaviour {
 
-    //　カメラの分割方法
+    //画面の分割モード(横・縦)
     public enum SplitCameraMode {
         horizontal,
         vertical
     };
 
-    public SplitCameraMode mode;	//　カメラの分割方法
+    public SplitCameraMode splitMode;
 
-    //　分割するそれぞれのカメラ
-    public Camera MainCamera;
-    public Camera SubCamera;
+    //分割するそれぞれのカメラ
+    [SerializeField] private Camera terrainCamera;
+    [SerializeField] private Camera canvasCamera;
 
     // Use this for initialization
     void Start () {
-        //　横分割
-        if (mode == SplitCameraMode.horizontal) {
-            //　カメラのViewPortRectの変更
-            MainCamera.rect = new Rect (0f, 0f, 0.5f, 1f);
-            SubCamera.rect = new Rect (0.5f, 0f, 0.5f, 1f);
+        if (splitMode == SplitCameraMode.horizontal) {
+            terrainCamera.rect = new Rect (0f, 0f, 0.5f, 1f);
+            canvasCamera.rect = new Rect (0.5f, 0f, 0.5f, 1f);
 
-            //　縦分割
-        } else if (mode == SplitCameraMode.vertical) {
-            //　カメラのViewPortRectの変更
-            MainCamera.rect = new Rect (0f, 0.5f, 1f, 0.5f);
-            SubCamera.rect = new Rect (0f, 0f, 1f, 0.5f);
+        } else if (splitMode == SplitCameraMode.vertical) {
+            terrainCamera.rect = new Rect (0f, 0.5f, 1f, 0.5f);
+            canvasCamera.rect = new Rect (0f, 0f, 1f, 0.5f);
         }
     }
 }
