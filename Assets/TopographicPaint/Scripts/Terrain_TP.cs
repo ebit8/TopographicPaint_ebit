@@ -7,16 +7,17 @@ using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.UtilsModule;
 using OpenCVForUnity.XimgprocModule;
+using TopographicPaint;
 
 public class Terrain_TP : MonoBehaviour
 {
     //テレインオブジェクトのマテリアル
     public Material terrainMat { get; set; }
     
-    //ハイトマップを生成するのに必要
-    [SerializeField, Range(0, 10)] public int shrink_level; //2のn乗
-    [SerializeField] public double gaussianKernel_size = 1;
-    [SerializeField, Range(0, 10)] public double gaussian_sigma = 1.0;
+    //ハイトマップを生成する際に必要
+    [SerializeField, Range(0, 10)] public int shrink_level; //画像処理の途中で画像サイズをどれだけ小さくするか
+    [SerializeField] public double gaussianKernel_size = 1; //後処理としてかけるガウスぼかしのカーネルサイズ
+    [SerializeField, Range(0, 10)] public double gaussian_sigma = 1.0; //ガウスぼかしの強さ
     
     
     private void Start()
@@ -33,31 +34,6 @@ public class Terrain_TP : MonoBehaviour
         terrainMat.SetInt("_ContourMaxLevel", contourMaxLevel);
     }
     
-    
-     /// <summary>
-    /// Texture2DをMatに変換
-    /// </summary>
-    /// <param name="tex"></param>
-    /// <returns></returns>
-    public static Mat Texture2DToMat(Texture2D tex)
-    {
-        var srcTex = tex;
-        var srcMat = new Mat(srcTex.height, srcTex.width, CvType.CV_8UC4);
-        Utils.texture2DToMat(srcTex, srcMat);
-        return srcMat;
-    }
-
-    /// <summary>
-    /// MatをTexture2Dに変換
-    /// </summary>
-    /// <param name="imgMat"></param>
-    /// <returns></returns>
-    public static Texture2D MatToTexture2D(Mat imgMat)
-    {
-        var tex = new Texture2D(imgMat.cols(), imgMat.rows(), TextureFormat.RGBA32, false);
-        Utils.matToTexture2D(imgMat, tex);
-        return tex;
-    }
     
     /// <summary>
     /// ハイトマップを生成
@@ -95,7 +71,7 @@ public class Terrain_TP : MonoBehaviour
         contour_Maxlevel = 0;
         
         //Texture2D → Mat
-        mat_src = Texture2DToMat(texIn);
+        mat_src = ImageProcessingUtils.Texture2DToMat(texIn);
         
         //画像処理ここから////////////////////////////////////////////////////
         
@@ -266,7 +242,7 @@ public class Terrain_TP : MonoBehaviour
             mat_dst = mat_src.setTo(new Scalar(0, 0, 0));
         }
 
-        texOut = MatToTexture2D(mat_dst);
+        texOut = ImageProcessingUtils.MatToTexture2D(mat_dst);
 
         return texOut;
     }
