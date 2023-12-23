@@ -5,7 +5,7 @@ using UnityEngine;
 public class PaintController : MonoBehaviour
 {
     [SerializeField] Camera camera2dWindow;
-    Texture2D drawTexture;
+    public Texture2D drawTexture;
     Color32[] buffer;
 
     private bool drawingFlag;
@@ -52,6 +52,7 @@ public class PaintController : MonoBehaviour
     
     void Update () 
     {
+        //線を引く処理
         if (Input.GetMouseButton (0)) 
         {
             Ray ray = camera2dWindow.ScreenPointToRay (Input.mousePosition);
@@ -78,6 +79,7 @@ public class PaintController : MonoBehaviour
         
         }
 
+        //線を引き終わったらハイトマップを生成する処理
         if (Input.GetMouseButtonUp(0) && drawingFlag == true)
         {
             //3D化するオブジェクトのマテリアル
