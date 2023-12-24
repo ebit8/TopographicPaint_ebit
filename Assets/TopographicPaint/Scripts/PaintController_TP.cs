@@ -1,11 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class PaintController : MonoBehaviour
+public class PaintController_TP : MonoBehaviour
 {
+    [SerializeField] private Canvas_TP canvasTP;
+    
     [SerializeField] Camera camera2dWindow;
-    public Texture2D drawTexture;
+    Texture2D drawTexture;
     Color32[] buffer;
 
     private bool drawingFlag;
@@ -13,24 +17,19 @@ public class PaintController : MonoBehaviour
     private Vector2Int previousPointerPos;
     private Vector2Int currentPointerPos;
 
-    //3D化するオブジェクトのマテリアルとスクリプトを参照
-    [SerializeField] private GameObject terrainObj;
-    private Material terrainMat;
-    private HeightFromTopographicMap heightFromTopo;
     private Color32 brushColor;
-
     
     //マウスカーソル用画像
     [SerializeField] private Texture2D cursor_pencil;
     [SerializeField] private Texture2D cursor_eraser;
+
+
+    [Serializable] private class DrawCompleteEvent : UnityEvent<Texture2D>{}
+    [SerializeField] private DrawCompleteEvent drawCompleteEvent = null;
     
     void Start ()
     {
-        terrainMat = terrainObj.GetComponent<Renderer>().material;
-        heightFromTopo = terrainObj.GetComponent<HeightFromTopographicMap>();
-        
-        
-        Texture2D mainTexture = (Texture2D) GetComponent<Renderer> ().material.mainTexture;
+        Texture2D mainTexture = (Texture2D) canvasTP.canvasMat.mainTexture;
         Color32[] pixels = mainTexture.GetPixels32();
 
         buffer = new Color32[pixels.Length];
@@ -43,7 +42,7 @@ public class PaintController : MonoBehaviour
         currentPointerPos = new Vector2Int(0, 0);
         drawTexture.SetPixels32 (buffer);
         drawTexture.Apply ();
-        GetComponent<Renderer> ().material.mainTexture = drawTexture;
+        canvasTP.canvasMat.mainTexture = drawTexture;
 
         drawingFlag = false;
         
@@ -74,7 +73,7 @@ public class PaintController : MonoBehaviour
                 
                 drawTexture.SetPixels32 (buffer);
                 drawTexture.Apply ();
-                GetComponent<Renderer> ().material.mainTexture = drawTexture;
+                canvasTP.canvasMat.mainTexture = drawTexture;
             }
         
         }
@@ -82,18 +81,7 @@ public class PaintController : MonoBehaviour
         //線を引き終わったらハイトマップを生成する処理
         if (Input.GetMouseButtonUp(0) && drawingFlag == true)
         {
-            //3D化するオブジェクトのマテリアル
-            heightFromTopo.topo_texture = drawTexture;
-            if (heightFromTopo.topo_texture != null)
-            {
-                // terrainMat.SetTexture("_MainTex", drawTexture);
-                terrainMat.SetTexture("_MainTex", drawTexture);
-                terrainMat.SetTexture("_ParallaxMap", 
-                        heightFromTopo.generateTopographicHeightMap(drawTexture,
-                            heightFromTopo.shrink_level, heightFromTopo.gaussianKernel_size, heightFromTopo.gaussian_sigma));
-                terrainMat.SetInt("_ContourMaxLevel", heightFromTopo.contour_Maxlevel);
-            }
-            
+            drawCompleteEvent.Invoke(drawTexture);
             drawingFlag = false;
         }
     }
@@ -202,17 +190,10 @@ public class PaintController : MonoBehaviour
         }
         drawTexture.SetPixels32 (buffer);
         drawTexture.Apply ();
+
+        canvasTP.canvasMat.mainTexture = drawTexture;
         
-        GetComponent<Renderer>().material.mainTexture = drawTexture;
-        heightFromTopo.topo_texture = drawTexture;
-        if (heightFromTopo.topo_texture != null)
-        {
-            // terrainMat.SetTexture("_MainTex", drawTexture);
-            terrainMat.SetTexture("_ParallaxMap", 
-                heightFromTopo.generateTopographicHeightMap(drawTexture,
-                    heightFromTopo.shrink_level, heightFromTopo.gaussianKernel_size, heightFromTopo.gaussian_sigma));
-            terrainMat.SetInt("_ContourMaxLevel", heightFromTopo.contour_Maxlevel);
-        }
+        drawCompleteEvent.Invoke(drawTexture);
     }
 
     public void UseBrush()
@@ -227,4 +208,3 @@ public class PaintController : MonoBehaviour
         // Cursor.SetCursor(cursor_eraser, new Vector2(0, 1), CursorMode.Auto);
     }
 }
-

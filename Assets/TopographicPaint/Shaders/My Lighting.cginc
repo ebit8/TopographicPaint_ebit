@@ -460,7 +460,15 @@ FragmentOutput MyFragmentProgram (Interpolators i) {
 		//高度に対応したグラデーション
 		float3 colorHigh = float3(0.8, 0.1, 0.0);
 		float3 colorLow = float3(0.1, 0.5, 0.0);
-		float3 interGradColor = lerp(colorLow, colorHigh, i.worldPos.y / (_DisplacementStrength * _ContourMaxLevel));
+		float3 interGradColor;
+		if(_ContourMaxLevel > 0)
+		{
+			interGradColor = lerp(colorLow, colorHigh, i.worldPos.y / (_DisplacementStrength * _ContourMaxLevel));
+		}
+		else
+		{
+			interGradColor = colorLow;
+		}
 		albedo *= interGradColor;
 	
 		//等高線を描画

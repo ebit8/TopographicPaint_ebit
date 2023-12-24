@@ -7,45 +7,36 @@ using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.UtilsModule;
 using OpenCVForUnity.XimgprocModule;
-using UnityEngine.Rendering;
-using UnityEngine.XR;
-using Random = UnityEngine.Random;
+using TopographicPaint;
 
-public class HeightFromTopographicMap : MonoBehaviour
+public class Terrain_TP : MonoBehaviour
 {
-    public Texture2D topo_texture { get; set;}
-    [SerializeField, Range(0, 10)] public int shrink_level; //2のn乗
-    [SerializeField] public double gaussianKernel_size = 1;
-    [SerializeField, Range(0, 10)] public double gaussian_sigma = 1.0;
-    public int contour_Maxlevel { get; set;}
-
-    /// <summary>
-    /// Texture2DをMatに変換
-    /// </summary>
-    /// <param name="tex"></param>
-    /// <returns></returns>
-    public static Mat Texture2DToMat(Texture2D tex)
+    //テレインオブジェクトのマテリアル
+    public Material terrainMat { get; set; }
+    
+    //ハイトマップを生成する際に必要
+    [SerializeField, Range(0, 10)] public int shrink_level; //画像処理の途中で画像サイズをどれだけ小さくするか
+    [SerializeField] public double gaussianKernel_size = 1; //後処理としてかけるガウスぼかしのカーネルサイズ
+    [SerializeField, Range(0, 10)] public double gaussian_sigma = 1.0; //ガウスぼかしの強さ
+    
+    
+    private void Start()
     {
-        var srcTex = tex;
-        var srcMat = new Mat(srcTex.height, srcTex.width, CvType.CV_8UC4);
-        Utils.texture2DToMat(srcTex, srcMat);
-        return srcMat;
-    }
-
-    /// <summary>
-    /// MatをTexture2Dに変換
-    /// </summary>
-    /// <param name="imgMat"></param>
-    /// <returns></returns>
-    public static Texture2D MatToTexture2D(Mat imgMat)
-    {
-        var tex = new Texture2D(imgMat.cols(), imgMat.rows(), TextureFormat.RGBA32, false);
-        Utils.matToTexture2D(imgMat, tex);
-        return tex;
+        terrainMat = GetComponent<Renderer>().material;
     }
     
+    
+    public void UpdateTerrainMaterial(Texture2D albedoTexture)
+    {
+        terrainMat.SetTexture("_MainTex", albedoTexture);
+        terrainMat.SetTexture("_ParallaxMap", 
+            generateTopographicHeightMap(albedoTexture, shrink_level, gaussianKernel_size, gaussian_sigma, out int contourMaxLevel));
+        terrainMat.SetInt("_ContourMaxLevel", contourMaxLevel);
+    }
+    
+    
     /// <summary>
-    /// ハイトマップ（に相当する2値画像）を生成
+    /// ハイトマップを生成
     /// </summary>
     /// <param name="texIn"></param>
     /// <param name="shrinkLevel"></param>
@@ -53,7 +44,7 @@ public class HeightFromTopographicMap : MonoBehaviour
     /// <param name="gaussianSigma"></param>
     /// <returns></returns>
     public Texture2D generateTopographicHeightMap(Texture2D texIn, int shrinkLevel,
-        double gaussianKernelSize, double gaussianSigma)
+        double gaussianKernelSize, double gaussianSigma, out int contour_Maxlevel)
     {
         Texture2D texOut;
         Mat mat_src;
@@ -76,9 +67,11 @@ public class HeightFromTopographicMap : MonoBehaviour
         Mat mat_interpolated;
         Mat mat_blur;
         Mat mat_dst;
+
+        contour_Maxlevel = 0;
         
         //Texture2D → Mat
-        mat_src = Texture2DToMat(texIn);
+        mat_src = ImageProcessingUtils.Texture2DToMat(texIn);
         
         //画像処理ここから////////////////////////////////////////////////////
         
@@ -249,7 +242,7 @@ public class HeightFromTopographicMap : MonoBehaviour
             mat_dst = mat_src.setTo(new Scalar(0, 0, 0));
         }
 
-        texOut = MatToTexture2D(mat_dst);
+        texOut = ImageProcessingUtils.MatToTexture2D(mat_dst);
 
         return texOut;
     }
@@ -501,4 +494,5 @@ public class HeightFromTopographicMap : MonoBehaviour
         //配列をdstに書き込む
         MatUtils.copyToMat(dst_array, dst);
     }
+
 }
