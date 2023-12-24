@@ -13,8 +13,8 @@
 * 立体化された地形は、マウス操作でグリグリ見ることができる
 * 標高によってグラデーションがかかっているので高さがわかりやすい
 
-# Requirement 
-
+# Requirements
+* Windows 10 or 11
 * Unity 2019.4.36f1
 * OpenCVforUnity 2.5.7 (https://assetstore.unity.com/packages/tools/integration/opencv-for-unity-21088?locale=ja-JP)
 
